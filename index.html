@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Information | PT-Grant</title>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -25,7 +24,6 @@
             overflow-x: hidden;
         }
 
-        /* Ambient background glow elements */
         body::before, body::after {
             content: '';
             position: absolute;
@@ -165,7 +163,6 @@
 
         .radio-option input[type="radio"]:checked + .radio-label {
             border-color: #4f46e5;
-            background-color: #eeef2a10;
             color: #4f46e5;
             font-weight: 600;
             background-color: #eef2ff;
@@ -190,11 +187,11 @@
             box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
         }
 
-        .submit-btn:active {
-            transform: translateY(0);
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
 
-        /* Success Message Box */
         .success-card {
             display: none;
             text-align: center;
@@ -256,34 +253,32 @@
 <body>
 
     <div class="container">
-        <!-- Header / Logo -->
         <div class="header">
             <div class="logo-container">PT</div>
             <h1>PT-Grant</h1>
             <p>Please enter your contact details below</p>
         </div>
 
-        <!-- Contact Form -->
         <form id="contactForm">
             <div class="form-row">
                 <div class="form-group">
                     <label for="firstName">First Name</label>
-                    <input type="text" id="firstName" placeholder="John" required>
+                    <input type="text" id="firstName" name="firstName" placeholder="John" required>
                 </div>
                 <div class="form-group">
                     <label for="lastName">Last Name</label>
-                    <input type="text" id="lastName" placeholder="Doe" required>
+                    <input type="text" id="lastName" name="lastName" placeholder="Doe" required>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="phone">Phone Number</label>
-                <input type="tel" id="phone" placeholder="(555) 000-0000" required>
+                <input type="tel" id="phone" name="phone" placeholder="(555) 000-0000" required>
             </div>
 
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input type="email" id="email" placeholder="john.doe@example.com" required>
+                <input type="email" id="email" name="email" placeholder="john.doe@example.com" required>
             </div>
 
             <div class="form-group">
@@ -300,10 +295,9 @@
                 </div>
             </div>
 
-            <button type="submit" class="submit-btn">Submit Information</button>
+            <button type="submit" id="submitBtn" class="submit-btn">Submit Information</button>
         </form>
 
-        <!-- Success Message -->
         <div id="successCard" class="success-card">
             <div class="success-icon">✓</div>
             <h2>Submission Received!</h2>
@@ -318,8 +312,6 @@
                     <div>Please check your <strong>phone number</strong> for any incoming messages.</div>
                 </div>
             </div>
-            
-            <p style="font-size: 13px; color: #64748b;">A copy of your submission has been generated as <strong>submission.txt</strong>.</p>
         </div>
     </div>
 
@@ -327,39 +319,33 @@
         document.getElementById('contactForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            // Retrieve form field values
-            const firstName = document.getElementById('firstName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const preference = document.querySelector('input[name="preference"]:checked').value;
-            const timestamp = new Date().toLocaleString();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerText = 'Submitting...';
+            submitBtn.disabled = true;
 
-            // Format submission output text
-            const submissionText = 
-`========================================
-PT-GRANT CONTACT SUBMISSION
-========================================
-Submission Date: ${timestamp}
-First Name:      ${firstName}
-Last Name:       ${lastName}
-Phone Number:    ${phone}
-Email Address:   ${email}
-Preferred Contact Method: ${preference}
-========================================`;
+            const payload = {
+                firstName: document.getElementById('firstName').value.trim(),
+                lastName: document.getElementById('lastName').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                preference: document.querySelector('input[name="preference"]:checked').value
+            };
 
-            // Trigger download of submission.txt
-            const blob = new Blob([submissionText], { type: 'text/plain;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'submission.txt';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            // Hide the form and show success confirmation
-            document.getElementById('contactForm').style.display = 'none';
-            document.getElementById('successCard').style.display = 'block';
+            fetch('/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('contactForm').style.display = 'none';
+                document.getElementById('successCard').style.display = 'block';
+            })
+            .catch(err => {
+                alert('Submission failed. Please try again.');
+                submitBtn.innerText = 'Submit Information';
+                submitBtn.disabled = false;
+            });
         });
     </script>
 
